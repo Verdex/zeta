@@ -1,9 +1,8 @@
 
-cc = csc
-
+cc = fsharpc
 
 all : 
-	$(cc) Program.cs 
+	$(cc) ConsoleInteract.fs MainLoop.fs
 
 clean :
 	rm -rf *.exe

@@ -14,5 +14,8 @@ module MainLoop =
 
         Thread.Sleep( 5000 )
 
-        let r = consoleMailbox.PostAndReply( fun rc -> GetNKeys( rc, (uint32)1 ) )
+        let r = consoleMailbox.PostAndReply( fun rc -> GetLastNKeys( rc, 4 ) )
         printfn "%A" r
+
+        killConsoleReader()
+

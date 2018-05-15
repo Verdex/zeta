@@ -7,7 +7,8 @@ module ConsoleTypes =
 
     type KeyPressEvent = KeyPressEvent of char * int64
     type ConsoleMessage = PostKey of KeyPressEvent 
-                        | GetNKeys of AsyncReplyChannel<list<KeyPressEvent>> * uint32
+                        | GetLastNKeys of AsyncReplyChannel<list<KeyPressEvent>> * int32
+                        // TODO Get Keys From so many seconds ago
 
 module ConsoleInterface =
 
@@ -23,8 +24,7 @@ module ConsoleInterface =
             async { let! msg = inbox.Receive()
                     match msg with
                         | PostKey kpe -> cs <- kpe :: cs
-                        | GetNKeys( reply, count ) -> reply.Reply( cs ) // TODO only return count character 
-
+                        | GetLastNKeys( reply, count ) -> reply.Reply( List.take count cs ) 
                     return! loop() }
         loop() )
 
@@ -38,18 +38,24 @@ module ConsoleReader =
     open System.Threading
     open System
 
+    let private l = new Object()
+    let mutable private shutdownFlag = false
+    let private initShutdownFlag () = lock l ( fun () -> shutdownFlag <- false )
+    let private shutdown () = lock l ( fun () -> shutdownFlag ) 
+
     let initConsoleReader (consoleMailBox : MailboxProcessor<ConsoleMessage> ) =  
+        initShutdownFlag()
         let thread = new Thread( fun () -> 
-            let rec loop () = // TODO need to have a way to kill the loop (maybe use while instead) 
-                let c = Console.ReadKey() // TODO need to hide keys pressed
+            while shutdown() = false do
+                let c = Console.ReadKey( true ) 
                 let tick = DateTime.Now.Ticks
                 consoleMailBox.Post( PostKey( KeyPressEvent( c.KeyChar, tick ) ))
-                loop() 
-            loop() )
+            )
                                            
         thread.Start()
 
-    // TODO need a kill console reader function
+    let killConsoleReader () = lock l ( fun () -> shutdownFlag <- true )
+
 
 // TODO need a Console init module to setup all of the console stuff
 

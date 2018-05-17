@@ -12,10 +12,16 @@ module MainLoop =
         initConsoleInterface()
         initConsoleReader( consoleMailbox  )
 
-        Thread.Sleep( 5000 )
+        let rec blah () =
+            Thread.Sleep( 500 )
+            let r = consoleMailbox.PostAndReply( fun rc -> GetLastNKeys( rc, 4 ) )
+            printfn "%A" r
+            match r with
+                | [ KeyPressEvent( 'q', _ ) ; KeyPressEvent( 'u', _ ) ; KeyPressEvent( 'i', _) ; KeyPressEvent( 't', _) ] -> () 
+                | _ -> blah ()
+            blah()
 
-        let r = consoleMailbox.PostAndReply( fun rc -> GetLastNKeys( rc, 4 ) )
-        printfn "%A" r
+        blah()
 
         killConsoleReader()
 

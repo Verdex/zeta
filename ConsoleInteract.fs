@@ -4,27 +4,36 @@ namespace Zeta
 module ConsoleTypes =
 
     open Microsoft.FSharp.Control
+    open System
 
-    type KeyPressEvent = KeyPressEvent of char * int64
+    type KeyPressEvent = KeyPressEvent of char * DateTime 
     type ConsoleMessage = PostKey of KeyPressEvent 
                         | GetLastNKeys of AsyncReplyChannel<list<KeyPressEvent>> * int32
-                        // TODO Get Keys From so many seconds ago
 
 module ConsoleInterface =
 
     open ConsoleTypes
     open Microsoft.FSharp.Control
 
-    // TODO will need some sort of way to clean out the characters without
-    // removing them before all the processes have used them
     let mutable private cs = [] 
+
+    let private AcceptPostAndTrim kpe = 
+        if cs.Length > 1000 then
+            cs <- List.take 1000 cs 
+            cs <- kpe :: cs 
+        else 
+            cs <- kpe :: cs 
+
+    let private TakeAtLeast n ( l : list<KeyPressEvent> ) = 
+        let total = if n < l.Length then n else l.Length in
+            List.take total l 
 
     let consoleMailbox = new MailboxProcessor<ConsoleMessage>( fun inbox -> 
         let rec loop () = 
             async { let! msg = inbox.Receive()
                     match msg with
-                        | PostKey kpe -> cs <- kpe :: cs
-                        | GetLastNKeys( reply, count ) -> reply.Reply( List.take count cs ) 
+                        | PostKey kpe -> AcceptPostAndTrim kpe
+                        | GetLastNKeys( reply, count ) -> reply.Reply( TakeAtLeast count cs ) 
                     return! loop() }
         loop() )
 
@@ -48,8 +57,7 @@ module ConsoleReader =
         let thread = new Thread( fun () -> 
             while shutdown() = false do
                 let c = Console.ReadKey( true ) 
-                let tick = DateTime.Now.Ticks
-                consoleMailBox.Post( PostKey( KeyPressEvent( c.KeyChar, tick ) ))
+                consoleMailBox.Post( PostKey( KeyPressEvent( c.KeyChar, DateTime.Now ) ))
             )
                                            
         thread.Start()

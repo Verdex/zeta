@@ -7,8 +7,17 @@ module ConsoleTypes =
     open System
 
     type KeyPressEvent = KeyPressEvent of char * DateTime 
+    type ConsoleChar = { Char : char
+                         ForeColor : ConsoleColor
+                         BackColor : ConsoleColor
+                       }
+    type ConsolePoint = { X : int
+                          Y : int
+                        }
+
     type ConsoleMessage = PostKey of KeyPressEvent 
                         | GetLastNKeys of AsyncReplyChannel<list<KeyPressEvent>> * int32
+                        | WriteToConsole of list<ConsoleChar * ConsolePoint> 
 
 module ConsoleInterface =
 
@@ -35,6 +44,8 @@ module ConsoleInterface =
                     match msg with
                         | PostKey kpe -> AcceptPostAndTrim kpe
                         | GetLastNKeys( reply, count ) -> reply.Reply( TakeAtLeast count cs ) 
+                        // TODO get height and width
+                        // TODO set console chars
                     return! loop() }
         loop() )
 
@@ -64,7 +75,6 @@ module ConsoleReader =
         thread.Start()
 
     let killConsoleReader () = lock l ( fun () -> shutdownFlag <- true )
-
 
 // TODO need a Console init module to setup all of the console stuff
 

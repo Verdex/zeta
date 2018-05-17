@@ -8,9 +8,21 @@ module MainLoop =
     open ConsoleReader
     open System.Threading
 
+    open System
+
     let main = 
-        initConsoleInterface()
-        initConsoleReader( consoleMailbox  )
+    
+        Console.BackgroundColor <- ConsoleColor.Blue
+        Console.ForegroundColor <- ConsoleColor.Green
+
+        Console.Clear()
+
+        Console.SetCursorPosition( 5, 5 )
+
+        Console.Write( 'W' )
+    
+        //initConsoleInterface()
+        //initConsoleReader( consoleMailbox  )
 
         let rec blah () =
             Thread.Sleep( 500 )
@@ -21,7 +33,8 @@ module MainLoop =
                 | _ -> blah ()
             blah()
 
-        blah()
+        Console.WriteLine( "blah" )
+        //blah()
 
-        killConsoleReader()
+        //killConsoleReader()
 

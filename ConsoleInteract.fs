@@ -15,6 +15,7 @@ module ConsoleInterface =
     open ConsoleTypes
     open Microsoft.FSharp.Control
 
+    // TODO replace list with circular buffer
     let mutable private cs = [] 
 
     let private AcceptPostAndTrim kpe = 

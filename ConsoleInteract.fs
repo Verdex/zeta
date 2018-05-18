@@ -23,33 +23,47 @@ module ConsoleInterface =
 
     open ConsoleTypes
     open Microsoft.FSharp.Control
+    open System
 
     // TODO replace list with circular buffer
     let mutable private cs = [] 
 
-    let private AcceptPostAndTrim kpe = 
+    let private acceptPostAndTrim kpe = 
         if cs.Length > 1000 then
             cs <- List.take 1000 cs 
             cs <- kpe :: cs 
         else 
             cs <- kpe :: cs 
 
-    let private TakeAtLeast n ( l : list<KeyPressEvent> ) = 
+    let private takeAtLeast n ( l : list<KeyPressEvent> ) = 
         let total = if n < l.Length then n else l.Length in
             List.take total l 
+
+    let private writeChars ls =
+        for (cChar, cPoint) in ls do
+            Console.BackgroundColor <- cChar.BackColor 
+            Console.ForegroundColor <- cChar.ForeColor 
+            Console.SetCursorPosition( cPoint.X, cPoint.Y )
+            Console.Write( cChar.Char )
+            
 
     let consoleMailbox = new MailboxProcessor<ConsoleMessage>( fun inbox -> 
         let rec loop () = 
             async { let! msg = inbox.Receive()
                     match msg with
-                        | PostKey kpe -> AcceptPostAndTrim kpe
-                        | GetLastNKeys( reply, count ) -> reply.Reply( TakeAtLeast count cs ) 
-                        // TODO get height and width
-                        // TODO set console chars
+                        | PostKey kpe -> acceptPostAndTrim kpe
+                        | GetLastNKeys( reply, count ) -> reply.Reply( takeAtLeast count cs ) 
+                        | WriteToConsole( ls ) -> writeChars ls
                     return! loop() }
         loop() )
 
-    let initConsoleInterface () = consoleMailbox.Start()
+    let initConsoleInterface () = 
+        consoleMailbox.Start()
+        Console.Clear()
+        Console.CursorVisible <- false
+
+    let getConsoleHeight () = Console.WindowHeight
+    let getConsoleWidth () = Console.WindowWidth
 
 
 module ConsoleReader =

@@ -12,17 +12,13 @@ module MainLoop =
 
     let main = 
     
-        Console.BackgroundColor <- ConsoleColor.Blue
-        Console.ForegroundColor <- ConsoleColor.Green
+        initConsoleInterface()
+        initConsoleReader( consoleMailbox  )
 
-        Console.Clear()
-
-        Console.SetCursorPosition( 5, 5 )
-
-        Console.Write( 'W' )
-    
-        //initConsoleInterface()
-        //initConsoleReader( consoleMailbox  )
+        consoleMailbox.Post( WriteToConsole( [( {Char = 'w'; ForeColor = ConsoleColor.Blue; BackColor = ConsoleColor.Red }, 
+                                                { X = 3 ; Y = 7 } );
+                                                ( {Char = 'A'; ForeColor = ConsoleColor.Green; BackColor = ConsoleColor.Yellow }, 
+                                                  { X = 5; Y = 10 } )] ) )
 
         let rec blah () =
             Thread.Sleep( 500 )
@@ -34,7 +30,10 @@ module MainLoop =
             blah()
 
         Console.WriteLine( "blah" )
+        let x = getConsoleHeight()
+        let y = getConsoleWidth() 
+        printfn "h = %A ; w = %A" x y  
         //blah()
 
-        //killConsoleReader()
+        killConsoleReader()
 
